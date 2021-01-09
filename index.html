@@ -1,0 +1,304 @@
+<html>
+    <head>
+        <title>Extended signature data</title>
+        <style>
+            a {
+                color: tomato;
+            }
+        </style>
+    </head>
+    <body>
+<h4>SORTING TABLE DATA: you can sort data either by "Signed" or any % column, each click changes sorting direction. By default, the data is sorted by Target goal %</h4>  
+<h4>EXPLANATIONS: see below the table. </h4>  
+<div style="background:#ffd059;padding:10px;">
+      <script type = "application/javascript">
+       function loadJSONExt(prop='levelGoalPercentage', asc) {
+            var data_file = "ecitable.php";
+			var http_request = new XMLHttpRequest();
+            try{
+               // Opera 8.0+, Firefox, Chrome, Safari
+               http_request = new XMLHttpRequest();
+            }catch (e) {
+               // Internet Explorer Browsers
+               try{
+                  http_request = new ActiveXObject("Msxml2.XMLHTTP");
+					
+               }catch (e) {
+				
+                  try{
+                     http_request = new ActiveXObject("Microsoft.XMLHTTP");
+                  }catch (e) {
+                     // Something went wrong
+                     alert("Your browser broke!");
+                     return false;
+                  }
+					
+               }
+            }
+			
+            http_request.onreadystatechange = function() {
+            var row = "";
+			
+               if (http_request.readyState == 4  ) {
+                  // Javascript function JSON.parse to parse JSON data
+                  var jsonObj = JSON.parse(http_request.responseText);
+
+                  // jsonObj variable now contains the data structure and can
+                  // be accessed as jsonObj.name and jsonObj.country.
+                 var countriesJson = jsonObj.countryVotes.signatureCountryCount;
+                 var targets = jsonObj.targets;
+                 /* countriesJson.sort((a, b) => (a.count / a.treshold < b.count / b.treshold) ? 1 : (a.count / a.treshold === b.count / b.treshold) ? ((a.treshold > b.treshold) ? 1 : -1) : -1 ); */
+                 var countryNames = {
+                  at: "Austria",
+                  be: "Belgium",
+                  bg: "Bulgaria",
+                  hr: "Croatia",
+                  cy: "Cyprus",
+                  cz: "Czechia",
+                  dk: "Denmark",
+                  ee: "Estonia",
+                  fi: "Finland",
+                  fr: "France",
+                  de: "Germany",
+                  gr: "Greece",
+                  hu: "Hungary",
+                  ie: "Ireland",
+                  it: "Italy",
+                  lv: "Latvia",
+                  lt: "Lithuania",
+                  lu: "Luxembourg",
+                  mt: "Malta",
+                  nl: "Netherlands",
+                  pl: "Poland",
+                  pt: "Portugal",
+                  ro: "Romania",
+                  sk: "Slovakia",
+                  si: "Slovenia",
+                  es: "Spain",
+                  se: "Sweden",
+                  gb: "United Kingdom"
+                  };
+				 var tableRow = [];
+                 for (var i=0;i<countriesJson.length;i++) {
+                     var cc = countriesJson[i].countryCode;
+                   tableRow[i] = {};
+					 tableRow[i].countryFlag = "<img src='https://www.countryflags.io/"  + cc + "/shiny/32.png'>";
+					 tableRow[i].countryName = countryNames[cc];
+					 tableRow[i].signatureCount = countriesJson[i].count;
+                     tableRow[i].level1Value = targets[cc].Level1.value;
+					 tableRow[i].level1Type = targets[cc].Level1.type;
+					 tableRow[i].level1Percentage = parseFloat(100 * countriesJson[i].count / targets[cc].Level1.value).toFixed(2);
+                     tableRow[i].level2Value = targets[cc].Level2.value;
+					 tableRow[i].level2Type = targets[cc].Level2.type;
+					 tableRow[i].level2Percentage = parseFloat(100 * countriesJson[i].count / targets[cc].Level2.value).toFixed(2);
+                     tableRow[i].levelGoalValue = targets[cc].LevelGoal.value;
+					 //tableRow[i].levelGoalType = targets[cc].LevelGoal.type;
+					 tableRow[i].levelGoalNeed = needPerDay(targets[cc].LevelGoal.value, countriesJson[i].count);
+					 tableRow[i].levelGoalPercentage = parseFloat(100 * countriesJson[i].count / targets[cc].LevelGoal.value).toFixed(2);
+                     tableRow[i].level3Value = targets[cc].Level3.value;
+					 tableRow[i].level3Type = targets[cc].Level3.type;
+					 tableRow[i].level3Percentage = parseFloat(100 * countriesJson[i].count / targets[cc].Level3.value).toFixed(2);
+ 					 tableRow[i].threshold = countriesJson[i].treshold;
+ 					 tableRow[i].thresholdTotalNeed = totalNeed(countriesJson[i].treshold, countriesJson[i].count);
+					 tableRow[i].thresholdNeed = needPerDay(countriesJson[i].treshold, countriesJson[i].count);
+					 tableRow[i].thresholdPercentage = parseFloat(countriesJson[i].percentage).toFixed(2);
+					 tableRow[i].targetMEP = targets[cc].TargetMEP;
+					 tableRow[i].targetMEPPercentage = parseFloat(100 * countriesJson[i].count / targets[cc].TargetMEP).toFixed(2);
+					 tableRow[i].targetPop = targets[cc].TargetPop;
+					 tableRow[i].targetPopPercentage = parseFloat(100 * countriesJson[i].count / targets[cc].TargetPop).toFixed(2);                   
+                }
+				
+				function needPerDay(target, signatures) {
+					var startDate = new Date("2020-09-25");
+					var endDate = new Date("2021-12-25");
+					var today = new Date();
+					var firstDate = today;
+					var days = [];
+					 while( today <= endDate ){
+					   // this line modifies the original firstDate reference which you want to make the while loop work
+					   firstDate.setDate(firstDate.getDate() + 1);
+					   // this pushes a new date , if you were to push firstDate then you will keep updating every item in the array
+					   days.push(new Date(firstDate));
+					 }										 
+					var remained = days.length;
+					var need = (target - signatures) / remained;
+					return Math.round(need);
+				}
+				
+				function totalNeed(target, signatures) {
+				    return target - signatures;
+				}
+
+				function sortSignaturData(prop, asc) {
+					return function(a, b) {
+						if (asc == true) {
+							return a[prop] - b[prop];
+						}
+						else {
+							return b[prop] - a[prop];
+						}
+					}
+				}
+
+				tableRow.sort(sortSignaturData(prop, asc));                
+
+                var rowCols = [];
+				var align = "";
+				for (var i=0;i<tableRow.length;i++)
+                 {
+                    rowCols[i] = "";  
+               		for ([key, value] of Object.entries(tableRow[i])){
+						align = key == "countryFlag" || key == "countryName" ? "center" : "right";
+						if (key.includes("Percentage") && value >= 100)
+						{
+							value = "<span style='background-color:green;color:yellow;font-weight: bold;'>" + value + "</span>";
+						}
+						rowCols[i] += "<td style='text-align:" + align + ";border: 1px solid black;padding:6px'>" + value + "</td>";
+					};						
+	
+                  
+                 var cc = countriesJson[i].countryCode;
+                   row += "<tr id='" + cc + "'>" + rowCols[i] + "</tr>"; 
+                }
+				console.log(rowCols);
+                document.getElementById("countryVotesExtended").getElementsByTagName("tbody")[0].innerHTML = row;
+                 var allEU = "<tr>"
+				   + "<td style='border: 1px solid black;text-align:center;min-width:34px;'><img src='https://www.countryflags.io/eu/shiny/32.png'>"
+                   + "</td>"
+				   + "<td style='border: 1px solid black;text-align:center;padding:6px'>EU27"
+                   + "</td>"
+				   + "<td style='text-align:right;border: 1px solid black;padding:6px'>"
+                   + jsonObj.totalVotes.signatureCount
+                   + "</td>"
+				   + "<td style='text-align:center;border: 1px solid black;padding:6px' colspan='2'>"
+                   + targets.all.Level1.value
+                   + "</td>"
+				   + "<td style='text-align:right;border: 1px solid black;padding:6px'>"
+                   + parseFloat(100 * jsonObj.totalVotes.signatureCount / targets.all.Level1.value).toFixed(2)
+                   + "</td>"
+
+                   + "<td style='text-align:center;border: 1px solid black;padding:6px' colspan='2'>"
+                   + targets.all.Level2.value
+                   + "</td>"
+				   + "<td style='text-align:right;border: 1px solid black;padding:6px'>"
+                   + parseFloat(100 * jsonObj.totalVotes.signatureCount / targets.all.Level2.value).toFixed(2)
+                   + "</td>"
+
+                   + "<td style='text-align:center;border: 1px solid black;padding:6px'>"
+                   + targets.all.LevelGoal.value
+                   + "</td>"
+				   + "<td style='text-align:right;border: 1px solid black;padding:6px'>"
+				   + needPerDay(targets.all.LevelGoal.value, jsonObj.totalVotes.signatureCount)
+                   + "</td>"
+				   + "<td style='text-align:right;border: 1px solid black;padding:6px'>"
+                   + parseFloat(100 * jsonObj.totalVotes.signatureCount / targets.all.LevelGoal.value).toFixed(2)
+                   + "</td>"
+				   + "<td style='text-align:center;border: 1px solid black;padding:6px' colspan='2'>"
+                   + targets.all.Level3.value
+                   + "</td>"
+				   + "<td style='text-align:right;border: 1px solid black;padding:6px'>"
+                   + parseFloat(100 * jsonObj.totalVotes.signatureCount / targets.all.Level3.value).toFixed(2)
+                   + "</td>"
+				   + "<td style='text-align:right;border: 1px solid black;padding:6px'>"
+                   + targets.all.threshold
+                   + "</td>"
+				   + "<td style='text-align:right;border: 1px solid black;padding:6px'>"
+				   + totalNeed(targets.all.threshold, jsonObj.totalVotes.signatureCount)
+                   + "</td>"
+				   + "<td style='text-align:right;border: 1px solid black;padding:6px'>"
+				   + needPerDay(targets.all.threshold, jsonObj.totalVotes.signatureCount)
+                   + "</td>"
+				   + "<td style='text-align:right;border: 1px solid black;padding:6px'>"
+                   + parseFloat(100 * jsonObj.totalVotes.signatureCount / targets.all.threshold).toFixed(2)
+                   + "</td>"
+				   + "<td style='text-align:right;border: 1px solid black;padding:6px' colspan='4'><h4>Total of both <br>target is the goal: "
+                   + jsonObj.totalVotes.goal
+                   + "<br>, signed: "
+                   + parseFloat(100 * jsonObj.totalVotes.signatureCount / targets.all.TargetMEP).toFixed(2)
+                   + " %</td>"
+                   
+                   + "</tr>"
+                document.getElementById("countryVotesExtended").getElementsByTagName("tfoot")[0].innerHTML = allEU;
+                document.getElementById("update").innerHTML = "<h2>Total: " + jsonObj.totalVotes.signatureCount + "</h2><h5>Click here or sort data to update</h5>";  
+               }
+            }
+			
+            http_request.open("GET", data_file, true);
+            http_request.send();
+			
+		}
+		 
+		function prop(name='levelGoalPercentage', asc) {
+			var a = asc == true ? "" : ", true";
+			var b = asc == true ? ", true" : "";
+			document.getElementById(name).setAttribute('onclick', "prop('" + name + "'" + a + "); return false;");
+			document.getElementById("update").setAttribute('onclick', "loadJSONExt('" + name + "'" + b + ");");
+			return loadJSONExt(name, asc);
+		}
+		window.onload = loadJSONExt();
+		setInterval(loadJSONExt(), 3000);
+		
+      </script>
+
+
+        <table id="countryVotesExtended" style="width:100%">
+		   <colgroup>
+			<col span="3" style="background-color:white">
+			<col span="6">
+			<col span="3" style="background-color:white">
+			<col span="3">
+			<col span="4" style="background-color:white;color:tomato">
+		  </colgroup>
+        <thead style="width:100%">
+        <tr>
+          <th colspan="3"><div class = "central">
+	<button type = "button" id="update" onclick = "loadJSONExt()">Update signature count</button>
+</div></th>
+          <th style='border: 1px solid black;' colspan="3">Target: LEVEL 1</th>
+          <th style='border: 1px solid black;' colspan="3">Target: LEVEL 2</th>
+          <th style='border: 1px solid black;' colspan="3">Target: optimized<br>MAIN GOAL</th>
+          <th style='border: 1px solid black;' colspan="3">Target: LEVEL 3</th>
+        <th id="tresholdExt" style='border: 1px solid black;' colspan="4">THRESHOLD<br>       (which corresponds to the number of MEPs)</th>
+          <th style='border: 1px solid black;' colspan="2">TARGET MEP <br>- in proportion to the threshold (and MEPs)</th>
+          <th style='border: 1px solid black;' colspan="2">TARGET POP <br>- in proportion to the population</th>
+        </tr>
+          <tr>
+        <th id="countryCodeExt" style='border:1px solid black;padding:6px' colspan="2">Country</th>
+        <th id="countExt" style="border: 1px solid black;padding:6px"><a href="#" id="signatureCount" onclick="prop('signatureCount');return false">Signed</a></th>
+          <th style='border: 1px solid black;'>Min.sig</th>
+          <th style='border: 1px solid black;'>Type</th>
+          <th style='border: 1px solid black;'><a href="#" id="level1Percentage" onclick="prop('level1Percentage');return false">L1%</a></th>
+          <th style='border: 1px solid black;'>Min.sig</th>
+          <th style='border: 1px solid black;'>Type</th>
+          <th style='border: 1px solid black;'><a href="#" id="level2Percentage" onclick="prop('level2Percentage');return false">L2%</a></th>
+          <th style='border: 1px solid black;'><a href="#" id="levelGoalValue" onclick="prop('levelGoalValue');return false">Min.sig</a></th>
+          <th style='border: 1px solid black;'><a href="#" id="levelGoalNeed" onclick="prop('levelGoalNeed');return false">Daily need</a></th>
+          <th style='border: 1px solid black;'><a href="#" id="levelGoalPercentage" onclick="prop('levelGoalPercentage', true);return false">G%</a></th>
+          <th style='border: 1px solid black;'>Min.sig</th>
+          <th style='border: 1px solid black;'>Type</th>
+          <th style='border: 1px solid black;'><a href="#" id="level3Percentage" onclick="prop('level3Percentage');return false">L3%</a></th>
+        <th style='border: 1px solid black;' rowspan="2"><a href="#" id="threshold" onclick="prop('threshold');return false">THR</a></th>
+        <th style='border: 1px solid black;'><a href="#" id="thresholdTotalNeed" onclick="prop('thresholdTotalNeed');return false">Total need</a></th>
+        <th style='border: 1px solid black;'><a href="#" id="thresholdNeed" onclick="prop('thresholdNeed');return false">Daily need</a></th>
+        <th style='border: 1px solid black;' rowspan="2"><a href="#" id="thresholdPercentage" onclick="prop('thresholdPercentage');return false">%</a></th>
+        <th style='border: 1px solid black;' rowspan="2">MEP</th>
+        <th style='border: 1px solid black;' rowspan="2"><a href="#" id="targetMEPPercentage" onclick="prop('targetMEPPercentage');return false">%</a></th>
+        <th style='border: 1px solid black;' rowspan="2"><a href="#" id="targetPop" onclick="prop('targetPop');return false">POP</a></th>
+        <th style='border: 1px solid black;' rowspan="2"><a href="#" id="targetPopPercentage" onclick="prop('targetPopPercentage');return false">%</a></th>
+          </tr>
+        </thead>
+          <tfooT>
+          </tfoot>
+			<tbody>
+        </tbody>
+        </table>
+</div>
+<p>  The main reason for this representation of sigature statistic is that could be more fair way go get targets during this campaingn. As we know, the national thresholds are corresponding to the numbers of MEP-s which is not represeting the real proportions of population. Small countris are "overpresented" and big countries "underpresented". Therefore, if we think that dividing the number of each country's inhabitants with 447 (1 million signatures is about 1/447 of EU population) will give us a good target then we see that for smaller countries such target is lower than national threshold and for bigger countries it's higher than the target calculated from national threshold.</p> 
+  
+<p>  In this table, all 3 indicators are compared and sorted for each country. So for the smallest EU country, Malta, the lowest target is corresponding to their population and highest is calculated from threshold (therefore corresponds to their number of MEPs). For the biggest country, Germany, the lowest level is the national threshold, then threshold & MEP related target and then population-related one.</p>
+    
+<h4>    As the total of highest levels gives us bigger number than million, the real goal should be somewhere in the middle of 2nd and 3rd level. Fortunately, average between TargetMEP and TargetPOP gives us the needed number. </h4>
+  
+<p style="font:italic"> Earlier there was a more complex calculation in use, but this gave us equal goals for countries with different number of inhabitants in case when their 2nd level targets were equal. Attempts to fine-tune hadn't made things better for Netherlands and Romania which goal figures became lower than target level 2. Calculation for each country was: 2levelNational + ((1000000 - 2levelTotal) / (3levelTotal - 2levelTotal)) * (3levelNational - 2levelNational) - and rounded half up</p>
+</body>
+</html>
